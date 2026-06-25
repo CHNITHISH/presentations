@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presentation Feedback</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:     #0F1E3C;
+    --blue:     #1A4FBE;
+    --sky:      #3B82F6;
+    --mint:     #10B981;
+    --amber:    #F59E0B;
+    --rose:     #EF4444;
+    --bg:       #F0F4FF;
+    --card:     #FFFFFF;
+    --muted:    #6B7280;
+    --border:   #D1D9F0;
+    --radius:   14px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    color: var(--navy);
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, #1a3a7a 100%);
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 20px rgba(15,30,60,.35);
+  }
+  .header-icon {
+    width: 48px; height: 48px;
+    background: rgba(255,255,255,.12);
+    border-radius: 12px;
+    display: grid; place-items: center;
+    font-size: 24px;
+  }
+  header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px; font-weight: 700;
+    color: #fff;
+  }
+  header p { font-size: 13px; color: rgba(255,255,255,.6); margin-top: 2px; }
+
+  /* ── LAYOUT ── */
+  main {
+    max-width: 860px;
+    margin: 36px auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 28px;
+    box-shadow: 0 2px 12px rgba(15,30,60,.07);
+  }
+  .card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px; font-weight: 700;
+    color: var(--navy);
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--sky);
+  }
+
+  /* ── SELECTS ROW ── */
+  .selects-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  label {
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+  }
+  select, textarea {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    background: #F8FAFF;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--navy);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+  select:focus, textarea:focus {
+    border-color: var(--sky);
+    box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+  }
+  textarea {
+    background-image: none;
+    padding-right: 14px;
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  /* ── METRICS GRID ── */
+  .metrics-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .metric-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 36px;
+    align-items: center;
+    gap: 14px;
+  }
+  .metric-name { font-size: 14px; font-weight: 500; }
+  .stars {
+    display: flex;
+    gap: 6px;
+  }
+  .star-btn {
+    width: 36px; height: 36px;
+    border: none; background: none;
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+    transition: transform .15s;
+    color: #D1D5DB;
+    padding: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .star-btn:hover, .star-btn.active { color: #F59E0B; }
+  .star-btn:hover { transform: scale(1.2); }
+  .rating-num {
+    font-size: 15px; font-weight: 700;
+    color: var(--sky);
+    text-align: center;
+    width: 36px;
+  }
+
+  /* ── OVERALL ── */
+  .overall-wrapper {
+    background: linear-gradient(135deg, #EFF6FF, #F0FDF4);
+    border: 1.5px solid #BFDBFE;
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .overall-label {
+    font-size: 13px; font-weight: 600; color: var(--blue);
+    margin-bottom: 12px;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  .overall-stars { display: flex; gap: 8px; }
+  .overall-stars .star-btn { width: 44px; height: 44px; font-size: 28px; }
+
+  /* ── SUBMIT ── */
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--blue), var(--sky));
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer;
+    letter-spacing: .03em;
+    transition: opacity .2s, transform .15s, box-shadow .2s;
+    box-shadow: 0 4px 14px rgba(26,79,190,.35);
+  }
+  .submit-btn:hover { opacity: .92; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,79,190,.4); }
+  .submit-btn:active { transform: translateY(0); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: var(--navy);
+    color: #fff;
+    padding: 14px 22px;
+    border-radius: 10px;
+    font-size: 14px; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity .3s, transform .3s;
+    pointer-events: none;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ── BAR CHART ── */
+  .chart-section { margin-top: 8px; }
+  .chart-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px;
+  }
+  .chart-filter {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .filter-chip {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: #F8FAFF;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; color: var(--muted);
+    transition: all .15s;
+  }
+  .filter-chip.active, .filter-chip:hover {
+    background: var(--blue); color: #fff; border-color: var(--blue);
+  }
+
+  .bars-container { display: flex; flex-direction: column; gap: 20px; }
+
+  .presenter-block { display: flex; flex-direction: column; gap: 6px; }
+  .presenter-label {
+    font-size: 13px; font-weight: 700; color: var(--navy);
+    display: flex; justify-content: space-between;
+  }
+  .presenter-label .count { font-weight: 400; color: var(--muted); font-size: 12px; }
+
+  .bar-track {
+    height: 38px;
+    background: #F0F4FF;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 8px;
+    display: flex; align-items: center;
+    padding-left: 14px;
+    font-size: 14px; font-weight: 700; color: #fff;
+    transition: width .8s cubic-bezier(.4,0,.2,1);
+    width: 0;
+    white-space: nowrap;
+  }
+  .bar-fill.blue   { background: linear-gradient(90deg, var(--blue), var(--sky)); }
+  .bar-fill.green  { background: linear-gradient(90deg, #059669, var(--mint)); }
+  .bar-fill.amber  { background: linear-gradient(90deg, #D97706, var(--amber)); }
+  .bar-fill.rose   { background: linear-gradient(90deg, #DC2626, var(--rose)); }
+  .bar-fill.purple { background: linear-gradient(90deg, #7C3AED, #A78BFA); }
+
+  .metric-breakdown {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;
+  }
+  .metric-pill {
+    font-size: 11px; font-weight: 600;
+    padding: 3px 10px;
+    background: #EFF6FF;
+    color: var(--blue);
+    border-radius: 20px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  @media (max-width: 600px) {
+    .selects-row { grid-template-columns: 1fr; }
+    .metric-row { grid-template-columns: 140px 1fr 32px; gap: 8px; }
+    .star-btn { width: 30px; height: 30px; font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-icon">📊</div>
+  <div>
+    <h1>Presentation Feedback</h1>
+    <p>Rate peers on five metrics · Press <b>Ctrl + Shift + S</b> to download data.json anytime</p>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Submit Feedback</div>
+
+    <div class="selects-row" style="margin-bottom:20px">
+      <div class="field">
+        <label>You are</label>
+        <select id="reviewer">
+          <option value="">— Select your name —</option>
+          <option value="2502809">2502809 – Shirumalla Nikhil</option>
+          <option value="2502814">2502814 – Kondreddy Sivasankar Reddy</option>
+          <option value="2502830">2502830 – Rishav Raj</option>
+          <option value="2502827">2502827 – Kotla Pranay Teja</option>
+          <option value="2502825">2502825 – Raja Ravindranath Reddy Reddygari</option>
+          <option value="2502819">2502819 – Pranav Ravindra Deshmukh</option>
+          <option value="2502829">2502829 – Panuganti Manideep</option>
+          <option value="2502818">2502818 – Prudvi Kumar Reddy Polam Reddy</option>
+          <option value="2502808">2502808 – Machani Satya Sai</option>
+          <option value="2502822">2502822 – Yalagaboina Sirividya</option>
+          <option value="2502837">2502837 – Sumeet Prakash Gaikwad</option>
+          <option value="2502820">2502820 – Murugani Krishna Srinivas</option>
+          <option value="2502834">2502834 – Nori Sai Havisha</option>
+          <option value="2502802">2502802 – Sambana Dinesh Kumar</option>
+          <option value="2502801">2502801 – Chintha Nithish</option>
+          <option value="2502836">2502836 – Syed Jameel</option>
+          <option value="2502821">2502821 – Veeraja Prashant Ghate</option>
+          <option value="2502833">2502833 – Harik Ponaganti</option>
+          <option value="2502835">2502835 – Prathamesh Anil Pise</option>
+          <option value="2502828">2502828 – Bodige Varunsai</option>
+          <option value="2502803">2502803 – Mohammed Abdul Malik</option>
+          <option value="2502826">2502826 – Sambarapu Pavan Kumar</option>
+          <option value="2502832">2502832 – Mallepally Nanda Varma Reddy</option>
+          <option value="2502831">2502831 – Shaik MD Farooq Hassian</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Feedback for</label>
+        <select id="presenter">
+          <option value="">— Select presenter —</option>
+          <option value="2502809">2502809 – Shirumalla Nikhil</option>
+          <option value="2502814">2502814 – Kondreddy Sivasankar Reddy</option>
+          <option value="2502830">2502830 – Rishav Raj</option>
+          <option value="2502827">2502827 – Kotla Pranay Teja</option>
+          <option value="2502825">2502825 – Raja Ravindranath Reddy Reddygari</option>
+          <option value="2502819">2502819 – Pranav Ravindra Deshmukh</option>
+          <option value="2502829">2502829 – Panuganti Manideep</option>
+          <option value="2502818">2502818 – Prudvi Kumar Reddy Polam Reddy</option>
+          <option value="2502808">2502808 – Machani Satya Sai</option>
+          <option value="2502822">2502822 – Yalagaboina Sirividya</option>
+          <option value="2502837">2502837 – Sumeet Prakash Gaikwad</option>
+          <option value="2502820">2502820 – Murugani Krishna Srinivas</option>
+          <option value="2502834">2502834 – Nori Sai Havisha</option>
+          <option value="2502802">2502802 – Sambana Dinesh Kumar</option>
+          <option value="2502801">2502801 – Chintha Nithish</option>
+          <option value="2502836">2502836 – Syed Jameel</option>
+          <option value="2502821">2502821 – Veeraja Prashant Ghate</option>
+          <option value="2502833">2502833 – Harik Ponaganti</option>
+          <option value="2502835">2502835 – Prathamesh Anil Pise</option>
+          <option value="2502828">2502828 – Bodige Varunsai</option>
+          <option value="2502803">2502803 – Mohammed Abdul Malik</option>
+          <option value="2502826">2502826 – Sambarapu Pavan Kumar</option>
+          <option value="2502832">2502832 – Mallepally Nanda Varma Reddy</option>
+          <option value="2502831">2502831 – Shaik MD Farooq Hassian</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card-title" style="margin-bottom:16px"><span class="dot" style="background:var(--mint)"></span>Rate Each Metric</div>
+    <div class="metrics-grid" id="metricsGrid">
+      </div>
+
+    <div class="overall-wrapper" style="margin-top:22px">
+      <div class="overall-label">⭐ Overall Rating</div>
+      <div class="overall-stars" id="overallStars"></div>
+    </div>
+
+    <div class="field" style="margin-top:18px">
+      <label>Comments (optional)</label>
+      <textarea id="comments" placeholder="Any additional thoughts about the presentation…"></textarea>
+    </div>
+
+    <button class="submit-btn" style="margin-top:20px" onclick="submitFeedback()">Submit Feedback →</button>
+  </div>
+
+  <div class="card chart-section">
+    <div class="card-title"><span class="dot" style="background:var(--mint)"></span>Average Ratings by Presenter</div>
+
+    <div class="chart-header">
+      <div class="chart-filter" id="metricFilter">
+        <button class="filter-chip active" data-metric="overall" onclick="setMetric('overall', this)">Overall</button>
+        <button class="filter-chip" data-metric="Content Quality" onclick="setMetric('Content Quality', this)">Content</button>
+        <button class="filter-chip" data-metric="Delivery & Clarity" onclick="setMetric('Delivery & Clarity', this)">Delivery</button>
+        <button class="filter-chip" data-metric="Engagement" onclick="setMetric('Engagement', this)">Engagement</button>
+        <button class="filter-chip" data-metric="Slide Design" onclick="setMetric('Slide Design', this)">Slides</button>
+        <button class="filter-chip" data-metric="Body Language" onclick="setMetric('Body Language', this)">Q&A</button>
+      </div>
+      <button class="filter-chip" style="background:var(--navy); color:#fff; border:none;" onclick="downloadDataJson()">Get data.json ↓</button>
+    </div>
+
+    <div class="bars-container" id="barsContainer">
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <p>No feedback submitted yet. Be the first!</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── State ── */
+const METRICS = ["Content Quality","Delivery & Clarity","Engagement","Slide Design","Body Language"];
+const COLORS   = ["blue","green","amber","rose","purple"];
+let ratings   = {}; 
+let overall   = 0;
+let activeMetric = "overall";
+
+// Safely loads entries directly from browser cache memory
+let allFeedback = JSON.parse(localStorage.getItem("pfb_data") || "[]");
+
+/* ── Build metric stars ── */
+function buildMetrics() {
+  const grid = document.getElementById("metricsGrid");
+  grid.innerHTML = "";
+  METRICS.forEach(m => {
+    ratings[m] = 0;
+    const row = document.createElement("div");
+    row.className = "metric-row";
+    row.innerHTML = `
+      <div class="metric-name">${m}</div>
+      <div class="stars" id="stars_${m.replace(/\W/g,'_')}">
+        ${[1,2,3,4,5].map(v=>`<button class="star-btn" data-metric="${m}" data-val="${v}" onclick="setRating('${m}',${v})">☆</button>`).join("")}
+      </div>
+      <div class="rating-num" id="num_${m.replace(/\W/g,'_')}">—</div>`;
+    grid.appendChild(row);
+  });
+}
+
+function buildOverallStars() {
+  const el = document.getElementById("overallStars");
+  el.innerHTML = [1,2,3,4,5].map(v =>
+    `<button class="star-btn" data-val="${v}" onclick="setOverall(${v})">☆</button>`
+  ).join("");
+}
+
+function setRating(metric, val) {
+  ratings[metric] = val;
+  const id = metric.replace(/\W/g,"_");
+  document.querySelectorAll(`#stars_${id} .star-btn`).forEach(b => {
+    const v = +b.dataset.val;
+    b.textContent = v <= val ? "★" : "☆";
+    b.classList.toggle("active", v <= val);
+  });
+  document.getElementById(`num_${id}`).textContent = val;
+}
+
+function setOverall(val) {
+  overall = val;
+  document.querySelectorAll("#overallStars .star-btn").forEach(b => {
+    const v = +b.dataset.val;
+    b.textContent = v <= val ? "★" : "☆";
+    b.classList.toggle("active", v <= val);
+  });
+}
+
+/* ── Submit ── */
+function getSelected(id) {
+  const sel = document.getElementById(id);
+  return { roll: sel.value, name: sel.options[sel.selectedIndex]?.text || "" };
+}
+
+function submitFeedback() {
+  const rev = getSelected("reviewer");
+  const pre = getSelected("presenter");
+  const comments = document.getElementById("comments").value;
+
+  if (!rev.roll) return showToast("⚠️ Please select who you are.");
+  if (!pre.roll) return showToast("⚠️ Please select the presenter.");
+  if (rev.roll === pre.roll) return showToast("⚠️ You can't review yourself.");
+
+  const missing = METRICS.filter(m => !ratings[m]);
+  if (missing.length) return showToast(`⚠️ Please rate: ${missing.join(", ")}`);
+  if (!overall) return showToast("⚠️ Please give an overall rating.");
+
+  const entry = {
+    reviewer: rev.roll, reviewerName: rev.name,
+    presenter: pre.roll, presenterName: pre.name,
+    comments, overall,
+    date: new Date().toISOString().slice(0,10),
+    metrics: { ...ratings }
+  };
+  
+  allFeedback.push(entry);
+  localStorage.setItem("pfb_data", JSON.stringify(allFeedback));
+
+  showToast("✅ Response logged securely in local browser storage!");
+  resetForm();
+  renderChart();
+}
+
+function resetForm() {
+  document.getElementById("reviewer").value = "";
+  document.getElementById("presenter").value = "";
+  document.getElementById("comments").value = "";
+  overall = 0;
+  buildMetrics();
+  buildOverallStars();
+}
+
+/* ── Native File Download Utility ── */
+function downloadDataJson() {
+  if (!allFeedback.length) {
+    return showToast("⚠️ There is no data logged to export yet!");
+  }
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allFeedback, null, 2));
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", "data.json");
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+  showToast("⬇️ data.json downloaded to your Downloads folder!");
+}
+
+/* Keyboard Shortcut Action (Ctrl + Shift + S) */
+window.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s") {
+    e.preventDefault();
+    downloadDataJson();
+  }
+});
+
+/* ── Chart ── */
+function setMetric(m, btn) {
+  activeMetric = m;
+  document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+  btn.classList.add("active");
+  renderChart();
+}
+
+function renderChart() {
+  const container = document.getElementById("barsContainer");
+  if (!allFeedback.length) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No feedback submitted yet. Be the first!</p></div>`;
+    return;
+  }
+
+  const map = {};
+  allFeedback.forEach(f => {
+    const key = f.presenter;
+    if (!map[key]) map[key] = { entries: [], name: f.presenterName || f.presenter };
+    map[key].entries.push(f);
+  });
+
+  const presenters = Object.keys(map).sort();
+  const maxVal = 5;
+
+  container.innerHTML = "";
+  presenters.forEach((key, idx) => {
+    const { entries, name } = map[key];
+    let val;
+    if (activeMetric === "overall") {
+      val = entries.reduce((s, e) => s + e.overall, 0) / entries.length;
+    } else {
+      val = entries.reduce((s, e) => s + (e.metrics[activeMetric] || 0), 0) / entries.length;
+    }
+    const pct = (val / maxVal) * 100;
+    const colorClass = COLORS[idx % COLORS.length];
+
+    const pills = METRICS.map(m => {
+      const avg = entries.reduce((s,e)=>s+(e.metrics[m]||0),0)/entries.length;
+      return `<span class="metric-pill">${m.split(" ")[0]}: ${avg.toFixed(1)}</span>`;
+    }).join("");
+
+    const block = document.createElement("div");
+    block.className = "presenter-block";
+    block.innerHTML = `
+      <div class="presenter-label">
+        <span>${name}</span>
+        <span class="count">${entries.length} review${entries.length!==1?"s":""}</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill ${colorClass}" id="bar_${idx}" style="width:0%">${val.toFixed(2)} / 5</div>
+      </div>
+      <div class="metric-breakdown">${pills}</div>`;
+    container.appendChild(block);
+
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const targetElement = document.getElementById(`bar_${idx}`);
+        if(targetElement) targetElement.style.width = pct + "%";
+      }, 80 * idx);
+    });
+  });
+}
+
+/* ── Toast ── */
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+/* ── Init ── */
+buildMetrics();
+buildOverallStars();
+renderChart();
+</script>
+</body>
+</html>
