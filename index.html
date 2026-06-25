@@ -195,7 +195,7 @@
     box-shadow: 0 4px 14px rgba(26,79,190,.35);
   }
   .submit-btn:hover { opacity: .92; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,79,190,.4); }
-  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { background: #9CA3AF; cursor: not-allowed; box-shadow: none; opacity: 0.6; }
 
   /* ── TOAST ── */
   .toast {
@@ -300,8 +300,8 @@
 <header>
   <div class="header-icon">📊</div>
   <div>
-    <h1>Presentation Feedback</h1>
-    <p>Rate peers on five metrics · Press <b>Ctrl + Shift + S</b> to download data.json anytime</p>
+    <h1>Presentation Feedback (Connected to Google Sheets)</h1>
+    <p>Rate peers on five metrics · Data routes instantly to your central spreadsheet</p>
   </div>
 </header>
 
@@ -385,11 +385,11 @@
       <textarea id="comments" placeholder="Any additional thoughts about the presentation…"></textarea>
     </div>
 
-    <button class="submit-btn" style="margin-top:20px" onclick="submitFeedback()">Submit Feedback →</button>
+    <button id="submitBtn" class="submit-btn" style="margin-top:20px" onclick="submitFeedback()">Submit Feedback →</button>
   </div>
 
   <div class="card chart-section">
-    <div class="card-title"><span class="dot" style="background:var(--mint)"></span>Average Ratings by Presenter</div>
+    <div class="card-title"><span class="dot" style="background:var(--mint)"></span>Your Device Submissions (Local Analytics)</div>
 
     <div class="chart-header">
       <div class="chart-filter" id="metricFilter">
@@ -398,18 +398,18 @@
         <button class="filter-chip" data-metric="Delivery & Clarity" onclick="setMetric('Delivery & Clarity', this)">Delivery</button>
         <button class="filter-chip" data-metric="Engagement" onclick="setMetric('Engagement', this)">Engagement</button>
         <button class="filter-chip" data-metric="Slide Design" onclick="setMetric('Slide Design', this)">Slides</button>
-        <button class="filter-chip" data-metric="Body Language" onclick="setMetric('Body Language', this)">Q&A</button>
+        <button class="filter-chip" data-metric="Body Language" onclick="setMetric('Body Language', this)">Body Language</button>
       </div>
       <div style="display: flex; gap: 8px;">
-        <button class="filter-chip" style="background:var(--rose); color:#fff; border:none;" onclick="clearLocalStorageData()">Clear Form Data 🗑️</button>
-        <button class="filter-chip" style="background:var(--navy); color:#fff; border:none;" onclick="downloadDataJson()">Get data.json ↓</button>
+        <button class="filter-chip" style="background:var(--rose); color:#fff; border:none;" onclick="clearLocalStorageData()">Clear Device Cache 🗑️</button>
+        <button class="filter-chip" style="background:var(--navy); color:#fff; border:none;" onclick="downloadDataJson()">Backup JSON ↓</button>
       </div>
     </div>
 
     <div class="bars-container" id="barsContainer">
       <div class="empty-state">
         <div class="icon">📭</div>
-        <p>No feedback submitted yet. Be the first!</p>
+        <p>No feedback submitted from this browser yet.</p>
       </div>
     </div>
   </div>
@@ -418,6 +418,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
+/* ── Configuration ── */
+const GOOGLE_SCRIPT_URL = "https://script.google.com/a/macros/cognizant.com/s/AKfycbw4x7Ix0WrETUMfHxSCRhgUo5aRMDIJyJfEJYKr0qouwIw9IqUCIMSB1_o2rtjTKnOI2w/exec"; 
+
 /* ── State ── */
 const METRICS = ["Content Quality","Delivery & Clarity","Engagement","Slide Design","Body Language"];
 const COLORS   = ["blue","green","amber","rose","purple"];
@@ -482,6 +485,7 @@ function submitFeedback() {
   const rev = getSelected("reviewer");
   const pre = getSelected("presenter");
   const comments = document.getElementById("comments").value;
+  const submitBtn = document.getElementById("submitBtn");
 
   if (!rev.roll) return showToast("⚠️ Please select who you are.");
   if (!pre.roll) return showToast("⚠️ Please select the presenter.");
@@ -498,13 +502,35 @@ function submitFeedback() {
     date: new Date().toISOString().slice(0,10),
     metrics: { ...ratings }
   };
-  
-  allFeedback.push(entry);
-  localStorage.setItem("pfb_data", JSON.stringify(allFeedback));
 
-  showToast("✅ Response logged securely in local browser storage!");
-  resetForm();
-  renderChart();
+  // UI state change during upload
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Syncing with Google Sheets...";
+
+  // POST directly to Google Sheets Web App endpoint
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors", // Necessary for Google Script requests from local file system
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(entry)
+  })
+  .then(() => {
+    // Log submission locally for user reference charting
+    allFeedback.push(entry);
+    localStorage.setItem("pfb_data", JSON.stringify(allFeedback));
+
+    showToast("🚀 Logged directly into the master Google Sheet!");
+    resetForm();
+    renderChart();
+  })
+  .catch(err => {
+    console.error(err);
+    showToast("❌ Network error saving data. Check connection.");
+  })
+  .finally(() => {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Submit Feedback →";
+  });
 }
 
 function resetForm() {
@@ -518,36 +544,28 @@ function resetForm() {
 
 /* ── Clear Form Data Utility ── */
 function clearLocalStorageData() {
-  if (confirm("Are you sure you want to completely erase all data submissions and start fresh? This cannot be undone.")) {
+  if (confirm("Clear local graph cache? (This will NOT erase data already pushed inside Google Sheets)")) {
     localStorage.removeItem("pfb_data");
     allFeedback = [];
     resetForm();
     renderChart();
-    showToast("🗑️ All cached records successfully wiped clean!");
+    showToast("🗑️ Local cache cleared.");
   }
 }
 
 /* ── Native File Download Utility ── */
 function downloadDataJson() {
   if (!allFeedback.length) {
-    return showToast("⚠️ There is no data logged to export yet!");
+    return showToast("⚠️ There is no data logged on this device yet!");
   }
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allFeedback, null, 2));
   const downloadAnchorNode = document.createElement('a');
   downloadAnchorNode.setAttribute("href", dataStr);
-  downloadAnchorNode.setAttribute("download", "data.json");
+  downloadAnchorNode.setAttribute("download", "data_backup.json");
   document.body.appendChild(downloadAnchorNode);
   downloadAnchorNode.click();
   downloadAnchorNode.remove();
-  showToast("⬇️ data.json downloaded to your Downloads folder!");
 }
-
-window.addEventListener("keydown", (e) => {
-  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s") {
-    e.preventDefault();
-    downloadDataJson();
-  }
-});
 
 /* ── Chart ── */
 function setMetric(m, btn) {
@@ -560,7 +578,7 @@ function setMetric(m, btn) {
 function renderChart() {
   const container = document.getElementById("barsContainer");
   if (!allFeedback.length) {
-    container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No feedback submitted yet. Be the first!</p></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No feedback submitted from this browser yet.</p></div>`;
     return;
   }
 
