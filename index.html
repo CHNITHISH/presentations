@@ -373,8 +373,7 @@
     </div>
 
     <div class="card-title" style="margin-bottom:16px"><span class="dot" style="background:var(--mint)"></span>Rate Each Metric</div>
-    <div class="metrics-grid" id="metricsGrid">
-      </div>
+    <div class="metrics-grid" id="metricsGrid"></div>
 
     <div class="overall-wrapper" style="margin-top:22px">
       <div class="overall-label">⭐ Overall Rating</div>
@@ -401,7 +400,10 @@
         <button class="filter-chip" data-metric="Slide Design" onclick="setMetric('Slide Design', this)">Slides</button>
         <button class="filter-chip" data-metric="Body Language" onclick="setMetric('Body Language', this)">Q&A</button>
       </div>
-      <button class="filter-chip" style="background:var(--navy); color:#fff; border:none;" onclick="downloadDataJson()">Get data.json ↓</button>
+      <div style="display: flex; gap: 8px;">
+        <button class="filter-chip" style="background:var(--rose); color:#fff; border:none;" onclick="clearLocalStorageData()">Clear Form Data 🗑️</button>
+        <button class="filter-chip" style="background:var(--navy); color:#fff; border:none;" onclick="downloadDataJson()">Get data.json ↓</button>
+      </div>
     </div>
 
     <div class="bars-container" id="barsContainer">
@@ -423,7 +425,6 @@ let ratings   = {};
 let overall   = 0;
 let activeMetric = "overall";
 
-// Safely loads entries directly from browser cache memory
 let allFeedback = JSON.parse(localStorage.getItem("pfb_data") || "[]");
 
 /* ── Build metric stars ── */
@@ -515,6 +516,17 @@ function resetForm() {
   buildOverallStars();
 }
 
+/* ── Clear Form Data Utility ── */
+function clearLocalStorageData() {
+  if (confirm("Are you sure you want to completely erase all data submissions and start fresh? This cannot be undone.")) {
+    localStorage.removeItem("pfb_data");
+    allFeedback = [];
+    resetForm();
+    renderChart();
+    showToast("🗑️ All cached records successfully wiped clean!");
+  }
+}
+
 /* ── Native File Download Utility ── */
 function downloadDataJson() {
   if (!allFeedback.length) {
@@ -530,7 +542,6 @@ function downloadDataJson() {
   showToast("⬇️ data.json downloaded to your Downloads folder!");
 }
 
-/* Keyboard Shortcut Action (Ctrl + Shift + S) */
 window.addEventListener("keydown", (e) => {
   if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s") {
     e.preventDefault();
@@ -602,7 +613,6 @@ function renderChart() {
   });
 }
 
-/* ── Toast ── */
 function showToast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg;
